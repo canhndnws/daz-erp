@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- ============================================ -->
+    <!-- Create Employee -->
+    <!-- ============================================ -->
+    <service verb="create" noun="Employee">
+        <description>
+            Creates a new Employee. This creates a Person party record, assigns Employee role,
+            creates an Employee record, and optionally creates an Employment relationship
+            with an employer organization.
+        </description>
+        <in-parameters>
+            <!-- Person fields -->
+            <parameter name="firstName" required="true"/>
+            <parameter name="lastName" required="true"/>
+            <parameter name="middleName"/>
+            <parameter name="birthDate" type="Date"/>
+            <parameter name="gender"/>
+
+            <!-- Employer / Employment fields (optional) -->
+            <parameter name="employerPartyId"><description>Organization partyId to employ this person under</description></parameter>
+            <parameter name="emplPositionId"><description>Optional employment position ID</description></parameter>
+            <parameter name="employmentFromDate" type="Timestamp" default="ec.user.nowTimestamp"/>
+
+            <!-- Employee entity fields -->
+            <parameter name="taxFormId"/>
+            <parameter name="taxClassificationEnumId"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="partyId" required="true"/>
+            <parameter name="partyRelationshipId"><description>Set if employerPartyId was provided</description></parameter>
+        </out-parameters>
+        <actions>
+            <!-- 1. Create the Person (Party) record -->
+            <service-call name="mantle.party.PartyServices.create#Person" out-map="createPersonOut"
+                    in-map="[firstName:firstName, lastName:lastName, middleName:middleName,
+                             birthDate:birthDate, gender:gender, roleTypeId:'Employee']"/>
+            <set field="partyId" from="createPersonOut.partyId"/>
+
+            <!-- 2. Create the Employee record (HR-specific fields linked to the Party) -->
+            <service-call name="create#mantle.humanres.employment.Employee"
+                    in-map="[partyId:partyId, taxFormId:taxFormId,
+                             taxClassificationEnumId:taxClassificationEnumId]"/>
+
+            <!-- 3. Optionally create Employment relationship if an employer is specified -->
+            <if condition="employerPartyId">
+                <service-call name="mantle.humanres.EmploymentServices.create#Employment" out-map="createEmplOut"
+                        in-map="[fromPartyId:partyId, toPartyId:employerPartyId,
+                                 emplPositionId:emplPositionId, fromDate:employmentFromDate]"/>
+                <set field="partyRelationshipId" from="createEmplOut.partyRelationshipId"/>
+            </if>
+        </actions>
+    </service>
+
+    <!-- ============================================ -->
+    <!-- Get Employee Detail by ID -->
+    <!-- ============================================ -->
+    <service verb="get" noun="Employee">
+        <description>
+            Gets employee details by partyId. Returns person info, employee HR record,
+            and current employment relationships.
+        </description>
+        <in-parameters>
+            <parameter name="partyId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="partyId"/>
+            <parameter name="person" type="Map"/>
+            <parameter name="employee" type="Map"/>
+            <parameter name="employments" type="List"><parameter name="employment" type="Map"/></parameter>
+        </out-parameters>
+        <actions>
+            <!-- Get the Person record through the PartyDetail view -->
+            <entity-find-one entity-name="mantle.party.PartyDetail" value-field="partyDetail">
+                <field-map field-name="partyId"/>
+            </entity-find-one>
+            <if condition="!partyDetail">
+                <return error="true" message="Employee with partyId [${partyId}] not found"/>
+            </if>
+            <set field="person" from="[partyId:partyDetail.partyId, firstName:partyDetail.firstName,
+                    lastName:partyDetail.lastName, middleName:partyDetail.middleName,
+                    birthDate:partyDetail.birthDate, gender:partyDetail.gender,
+                    pseudoId:partyDetail.pseudoId, disabled:partyDetail.disabled]"/>
+
+            <!-- Get the Employee HR record -->
+            <entity-find-one entity-name="mantle.humanres.employment.Employee" value-field="employeeRecord">
+                <field-map field-name="partyId"/>
+            </entity-find-one>
+            <if condition="employeeRecord">
+                <set field="employee" from="[partyId:employeeRecord.partyId,
+                        taxFormId:employeeRecord.taxFormId,
+                        taxClassificationEnumId:employeeRecord.taxClassificationEnumId,
+                        taxFederalStatusEnumId:employeeRecord.taxFederalStatusEnumId,
+                        taxStateStatusEnumId:employeeRecord.taxStateStatusEnumId]"/>
+            </if>
+
+            <!-- Get current Employment relationships (employee is fromPartyId) -->
+            <entity-find entity-name="mantle.party.PartyRelationship" list="employmentRelList">
+                <date-filter/>
+                <econdition field-name="fromPartyId" from="partyId"/>
+                <econdition field-name="relationshipTypeEnumId" value="PrtEmployee"/>
+            </entity-find>
+            <set field="employments" from="[]"/>
+            <iterate list="employmentRelList" entry="rel">
+                <entity-find-one entity-name="mantle.humanres.employment.Employment" value-field="empl">
+                    <field-map field-name="partyRelationshipId" from="rel.partyRelationshipId"/>
+                </entity-find-one>
+                <!-- Get the employer party detail for name -->
+                <entity-find-one entity-name="mantle.party.PartyDetail" value-field="employerDetail">
+                    <field-map field-name="partyId" from="rel.toPartyId"/>
+                </entity-find-one>
+                <set field="emplMap" from="[partyRelationshipId:rel.partyRelationshipId,
+                        employerPartyId:rel.toPartyId,
+                        employerName:employerDetail?.organizationName ?: ((employerDetail?.firstName ?: '') + ' ' + (employerDetail?.lastName ?: '')),
+                        fromDate:rel.fromDate, thruDate:rel.thruDate,
+                        emplPositionId:empl?.emplPositionId]"/>
+                <script>employments.add(emplMap)</script>
+            </iterate>
+        </actions>
+    </service>
+
+    <!-- ============================================ -->
+    <!-- Get All Employees -->
+    <!-- ============================================ -->
+    <service verb="get" noun="Employees">
+        <description>
+            Gets a list of all employees. Finds all parties with the Employee role.
+            Supports optional filtering by firstName, lastName, and employerPartyId.
+            Supports pagination via pageIndex and pageSize.
+        </description>
+        <in-parameters>
+            <parameter name="firstName"/>
+            <parameter name="lastName"/>
+            <parameter name="employerPartyId"><description>Filter to employees of a specific organization</description></parameter>
+            <parameter name="pageIndex" type="Integer" default-value="0"/>
+            <parameter name="pageSize" type="Integer" default-value="20"/>
+            <parameter name="orderByField" default-value="lastName,firstName"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="employeeList" type="List"><parameter name="employee" type="Map"/></parameter>
+            <parameter name="employeeListCount" type="Integer"/>
+            <parameter name="employeeListPageIndex" type="Integer"/>
+            <parameter name="employeeListPageSize" type="Integer"/>
+            <parameter name="employeeListPageMaxIndex" type="Integer"/>
+            <parameter name="employeeListPageRangeLow" type="Integer"/>
+            <parameter name="employeeListPageRangeHigh" type="Integer"/>
+        </out-parameters>
+        <actions>
+            <!-- Prepare like filters -->
+            <set field="firstNameLike" from="firstName ? '%' + firstName + '%' : null"/>
+            <set field="lastNameLike" from="lastName ? '%' + lastName + '%' : null"/>
+
+            <if condition="employerPartyId"><then>
+                <!-- Find employees of a specific employer via PartyRelationship -->
+                <entity-find entity-name="mantle.party.PartyToAndRelationship" list="empRelList">
+                    <search-form-inputs default-order-by="lastName,firstName"
+                            paginate="true" input-fields-map="[pageIndex:pageIndex, pageSize:pageSize]"/>
+                    <date-filter/>
+                    <econdition field-name="toPartyId" from="employerPartyId"/>
+                    <econdition field-name="relationshipTypeEnumId" value="PrtEmployee"/>
+                </entity-find>
+                <set field="partyIds" from="empRelList*.fromPartyId"/>
+                <entity-find entity-name="mantle.party.PartyDetail" list="partyDetailList">
+                    <econdition field-name="partyId" operator="in" from="partyIds"/>
+                    <econdition field-name="firstName" operator="like" from="firstNameLike" ignore-if-empty="true"/>
+                    <econdition field-name="lastName" operator="like" from="lastNameLike" ignore-if-empty="true"/>
+                    <order-by field-name="${orderByField}"/>
+                </entity-find>
+            </then><else>
+                <!-- Find all parties with Employee role -->
+                <entity-find entity-name="mantle.party.PartyDetailAndRole" list="partyDetailList" offset="pageIndex * pageSize" limit="pageSize">
+                    <econdition field-name="roleTypeId" value="Employee"/>
+                    <econdition field-name="disabled" value="N" or-null="true"/>
+                    <econdition field-name="firstName" operator="like" from="firstNameLike" ignore-if-empty="true"/>
+                    <econdition field-name="lastName" operator="like" from="lastNameLike" ignore-if-empty="true"/>
+                    <order-by field-name="${orderByField}"/>
+                </entity-find>
+            </else></if>
+
+            <set field="employeeList" from="[]"/>
+            <iterate list="partyDetailList" entry="pd">
+                <set field="emplMap" from="[partyId:pd.partyId, firstName:pd.firstName,
+                        lastName:pd.lastName, middleName:pd.middleName,
+                        birthDate:pd.birthDate, gender:pd.gender,
+                        pseudoId:pd.pseudoId, disabled:pd.disabled]"/>
+                <script>employeeList.add(emplMap)</script>
+            </iterate>
+
+            <set field="employeeListCount" from="partyDetailList instanceof org.moqui.entity.EntityListIterator ? partyDetailList.getCount() : partyDetailList.size()"/>
+            <set field="employeeListPageIndex" from="pageIndex"/>
+            <set field="employeeListPageSize" from="pageSize"/>
+            <set field="employeeListPageMaxIndex" from="((employeeListCount - 1) as BigDecimal).divide(pageSize as BigDecimal, 0, BigDecimal.ROUND_DOWN) as Integer"/>
+            <set field="employeeListPageRangeLow" from="pageIndex * pageSize + 1"/>
+            <set field="employeeListPageRangeHigh" from="Math.min((pageIndex * pageSize + pageSize), employeeListCount) as Integer"/>
+        </actions>
+    </service>
+
+</services>

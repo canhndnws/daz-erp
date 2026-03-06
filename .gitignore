@@ -1,0 +1,14 @@
+# Git Ignore for Moqui Component
+.gradle/
+build/
+bin/
+out/
+lib/*.jar
+!lib/
+# User specific
+.idea/
+.project
+.classpath
+.settings/
+*.log
+*.tmp

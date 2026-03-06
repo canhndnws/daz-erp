@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        require-authentication="true" default-menu-title="HR Management">
+
+    <subscreens default-item="FindEmployee">
+        <subscreens-item name="FindEmployee" location="component://HrComponent/screen/hr/Employee/FindEmployee.xml" menu-title="Find Employees"/>
+        <subscreens-item name="EditEmployee" location="component://HrComponent/screen/hr/Employee/EditEmployee.xml" menu-title="Edit Employee" menu-include="false"/>
+    </subscreens>
+
+    <widgets>
+        <render-mode><text type="html"><![CDATA[<h2 class="text-primary">HR Management Module</h2>]]></text></render-mode>
+        <subscreens-tabs/>
+        <subscreens-active/>
+    </widgets>
+</screen>

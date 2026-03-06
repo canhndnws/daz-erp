@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+    <screen-facade>
+        <!-- HR Module screens configured through the daz-erp shell -->
+        <screen location="component://webroot/screen/webroot.xml">
+            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
+        </screen>
+        <screen location="component://webroot/screen/webroot/apps.xml">
+            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
+        </screen>
+        <screen location="component://webroot/screen/webroot/qapps.xml">
+            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
+        </screen>
+    </screen-facade>
+</moqui-conf>

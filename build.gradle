@@ -1,0 +1,89 @@
+// DAZ-ERP Root Build Script
+apply plugin: 'groovy'
+
+version = '1.0.0'
+def jarBaseName = 'daz-erp'
+
+def moquiDir = file(projectDir.absolutePath + '/../../..')
+def frameworkDir = file(moquiDir.absolutePath + '/framework')
+
+if (!frameworkDir.exists()) {
+    println "Warning: Moqui framework not found at ${frameworkDir.absolutePath}. " +
+            "This component should be located in runtime/component/ within a Moqui installation."
+}
+
+
+repositories {
+    flatDir name: 'localLib', dirs: frameworkDir.absolutePath + '/lib'
+    mavenCentral()
+}
+
+// Log4J has annotation processors, disable to avoid warning
+tasks.withType(JavaCompile) { options.compilerArgs << "-proc:none" }
+tasks.withType(GroovyCompile) { options.compilerArgs << "-proc:none" }
+
+dependencies {
+    // If this is run as part of the Moqui build (included in settings.gradle) the :framework project will exist
+    if (findProject(':framework')) {
+        implementation project(':framework')
+        testImplementation project(':framework').configurations.testImplementation.allDependencies
+    } else {
+        // If run standalone, use the framework jars from the resolved frameworkDir
+        implementation fileTree(dir: "${frameworkDir.absolutePath}/lib", include: '*.jar')
+        implementation fileTree(dir: "${frameworkDir.absolutePath}/build/libs", include: 'moqui-framework-*.jar')
+        testImplementation fileTree(dir: "${frameworkDir.absolutePath}/lib", include: '*.jar')
+    }
+}
+
+// Ensure tests are only run when explicitly called
+check.dependsOn.clear()
+
+
+// Build JAR and place in the lib directory where Moqui expects it
+jar {
+    destinationDirectory = file(projectDir.absolutePath + '/lib')
+    archiveBaseName = jarBaseName
+}
+
+// Task to copy dependencies to lib directory for Moqui runtime loading
+// Moqui does not use gradle at runtime, it looks in component lib directories
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    // exclude framework jars, they are already on the classpath
+    exclude { it.file.name.contains('moqui-') }
+    into 'lib'
+}
+// Optional: automatically copy dependencies when building
+// build.dependsOn copyDependencies
+
+// Standard Moqui Test Configuration
+test {
+    useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed" }
+    testLogging.showStandardStreams = true
+    testLogging.showExceptions = true
+    maxParallelForks = 1
+
+    dependsOn cleanTest
+    
+    // Default Moqui test system properties
+    systemProperty 'moqui.runtime', moquiDir.absolutePath + '/runtime'
+    systemProperty 'moqui.conf', 'conf/MoquiDevConf.xml'
+    systemProperty 'moqui.init.static', 'true'
+    
+    maxHeapSize = "512M"
+
+    // Filter out classpath entries that don't exist to avoid ElasticSearch/JarHell issues
+    classpath = classpath.filter { it.exists() }
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: ${descriptor}")
+    }
+}
+
+// Cleanup tasks
+task cleanLib(type: Delete) {
+    delete fileTree(dir: 'lib', include: "${jarBaseName}-*.jar")
+}
+clean.dependsOn cleanLib
+

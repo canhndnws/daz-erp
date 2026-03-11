@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <entity-facade>
+        <load-entity location="component://daz-erp/modules/rnfp-organization/entity/Province.xml"/>
+        <load-entity location="component://daz-erp/modules/rnfp-organization/entity/TrainingCenter.xml"/>
+        <load-data location="component://daz-erp/modules/rnfp-organization/data/ProvinceSetupData.xml"/>
+    </entity-facade>
+
+    <service-facade>
+        <service-file location="component://daz-erp/modules/rnfp-organization/service/province-services.xml"/>
+        <service-file location="component://daz-erp/modules/rnfp-organization/service/center-services.xml"/>
+    </service-facade>
+
+</moqui-conf>

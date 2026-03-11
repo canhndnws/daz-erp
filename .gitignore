@@ -12,3 +12,4 @@ lib/*.jar
 .settings/
 *.log
 *.tmp
+/.claude/settings.local.json

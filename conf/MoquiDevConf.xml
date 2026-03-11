@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <!--
+        RNFP Development Configuration
+        Uses PostgreSQL on localhost. Mirrors production to catch SQL compatibility issues early.
+
+        Prerequisites:
+          1. PostgreSQL running on localhost:5432
+          2. Database created:  CREATE DATABASE rnfp_dev;
+          3. User created:      CREATE USER rnfp_dev WITH PASSWORD 'rnfp_dev';
+                                GRANT ALL PRIVILEGES ON DATABASE rnfp_dev TO rnfp_dev;
+
+        Override via env vars (same names as production):
+          DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
+    -->
+
+    <cache-list>
+        <!-- Short TTLs for rapid dev iteration -->
+        <cache name="entity.record" expire-time-idle="60" expire-time-live="120"/>
+        <cache name="service.location" expire-time-idle="60" expire-time-live="120"/>
+        <cache name="screen.location" expire-time-idle="60" expire-time-live="120"/>
+    </cache-list>
+
+    <entity-facade crypt-pass="rnfp-dev-crypt-pass-change-me">
+        <datasource group-name="transactional" database-conf-name="postgres"
+                    schema-name="rnfp"
+                    add-missing-runtime="true">
+            <inline-jdbc
+                jdbc-uri="jdbc:postgresql://${System.getenv('DB_HOST') ?: 'localhost'}:${System.getenv('DB_PORT') ?: '5432'}/${System.getenv('DB_NAME') ?: 'rnfp_dev'}"
+                jdbc-username="${System.getenv('DB_USER') ?: 'rnfp_dev'}"
+                jdbc-password="${System.getenv('DB_PASS') ?: 'rnfp_dev'}"
+                pool-minsize="2"
+                pool-maxsize="10"/>
+        </datasource>
+    </entity-facade>
+
+    <user-facade>
+        <password encrypt-hash="SHA-256" min-length="6" min-digits="1"/>
+    </user-facade>
+
+    <screen-facade>
+        <!-- Mount RNFP REST API under /rnfp -->
+        <screen location="component://webroot/screen/webroot.xml">
+            <subscreens-item name="rnfp" location="component://daz-erp/modules/rnfp-api/screen/ApiRest.xml"
+                             menu-title="RNFP API" menu-index="10"/>
+        </screen>
+    </screen-facade>
+
+    <server-stats>
+        <artifact-stats type="screen" persist-bin-seconds="300"/>
+        <artifact-stats type="service" persist-bin-seconds="300"/>
+        <artifact-stats type="entity" persist-bin-seconds="300"/>
+    </server-stats>
+
+</moqui-conf>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-facade-xml type="seed">
+
+    <!-- ========== Status Types ========== -->
+    <rnfp.common.StatusType statusTypeId="LEARNER_STATUS"    description="Learner Registry Status"/>
+    <rnfp.common.StatusType statusTypeId="ENROLLMENT_STATUS" description="Enrollment Completion Status"/>
+    <rnfp.common.StatusType statusTypeId="CENTER_STATUS"     description="Training Center Accreditation Status"/>
+    <rnfp.common.StatusType statusTypeId="CP_AUTH_STATUS"    description="Center-Program Authorization Status"/>
+    <rnfp.common.StatusType statusTypeId="PP_AVAIL_STATUS"   description="Province-Program Availability Status"/>
+    <rnfp.common.StatusType statusTypeId="EXAM_RESULT"       description="Examination Result Status"/>
+    <rnfp.common.StatusType statusTypeId="CREDENTIAL_STATUS" description="Credential Issuance Status"/>
+    <rnfp.common.StatusType statusTypeId="DOCUMENT_STATUS"   description="Government Document Status"/>
+    <rnfp.common.StatusType statusTypeId="PROVINCE_STATUS"   description="Educational Province Status"/>
+    <rnfp.common.StatusType statusTypeId="PROGRAM_STATUS"    description="Training Program Status"/>
+    <rnfp.common.StatusType statusTypeId="SECTOR_STATUS"     description="Training Sector Status"/>
+
+    <!-- ========== Learner Status ========== -->
+    <rnfp.common.StatusItem statusId="LRN_ACTIVE"     statusTypeId="LEARNER_STATUS" description="Active"    sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="LRN_INACTIVE"   statusTypeId="LEARNER_STATUS" description="Inactive"  sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="LRN_SUSPENDED"  statusTypeId="LEARNER_STATUS" description="Suspended" sequenceNum="30"/>
+
+    <!-- ========== Enrollment Status ========== -->
+    <rnfp.common.StatusItem statusId="ENR_IN_PROGRESS" statusTypeId="ENROLLMENT_STATUS" description="In Progress" sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="ENR_COMPLETED"   statusTypeId="ENROLLMENT_STATUS" description="Completed"   sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="ENR_DROPPED"     statusTypeId="ENROLLMENT_STATUS" description="Dropped"     sequenceNum="30"/>
+
+    <!-- ========== Training Center Accreditation Status ========== -->
+    <rnfp.common.StatusItem statusId="CTR_PENDING"    statusTypeId="CENTER_STATUS" description="Pending"    sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="CTR_ACCREDITED" statusTypeId="CENTER_STATUS" description="Accredited" sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="CTR_SUSPENDED"  statusTypeId="CENTER_STATUS" description="Suspended"  sequenceNum="30"/>
+    <rnfp.common.StatusItem statusId="CTR_REVOKED"    statusTypeId="CENTER_STATUS" description="Revoked"    sequenceNum="40"/>
+
+    <!-- ========== Center-Program Authorization Status ========== -->
+    <rnfp.common.StatusItem statusId="CP_AUTHORIZED" statusTypeId="CP_AUTH_STATUS" description="Authorized" sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="CP_PENDING"    statusTypeId="CP_AUTH_STATUS" description="Pending"    sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="CP_REVOKED"    statusTypeId="CP_AUTH_STATUS" description="Revoked"    sequenceNum="30"/>
+
+    <!-- ========== Province-Program Availability Status ========== -->
+    <rnfp.common.StatusItem statusId="PP_AVAILABLE"    statusTypeId="PP_AVAIL_STATUS" description="Available"    sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="PP_SUSPENDED"    statusTypeId="PP_AVAIL_STATUS" description="Suspended"    sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="PP_DISCONTINUED" statusTypeId="PP_AVAIL_STATUS" description="Discontinued" sequenceNum="30"/>
+
+    <!-- ========== Exam Result Status ========== -->
+    <rnfp.common.StatusItem statusId="EXAM_PASS"    statusTypeId="EXAM_RESULT" description="Pass"    sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="EXAM_FAIL"    statusTypeId="EXAM_RESULT" description="Fail"    sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="EXAM_ABSENT"  statusTypeId="EXAM_RESULT" description="Absent"  sequenceNum="30"/>
+    <rnfp.common.StatusItem statusId="EXAM_PENDING" statusTypeId="EXAM_RESULT" description="Pending" sequenceNum="40"/>
+
+    <!-- ========== Credential Status ========== -->
+    <rnfp.common.StatusItem statusId="CRED_ISSUED"    statusTypeId="CREDENTIAL_STATUS" description="Issued"    sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="CRED_REVOKED"   statusTypeId="CREDENTIAL_STATUS" description="Revoked"   sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="CRED_SUSPENDED" statusTypeId="CREDENTIAL_STATUS" description="Suspended" sequenceNum="30"/>
+
+    <!-- ========== Government Document Status ========== -->
+    <rnfp.common.StatusItem statusId="DOC_ACTIVE"   statusTypeId="DOCUMENT_STATUS" description="Active"   sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="DOC_ARCHIVED" statusTypeId="DOCUMENT_STATUS" description="Archived" sequenceNum="20"/>
+    <rnfp.common.StatusItem statusId="DOC_REVOKED"  statusTypeId="DOCUMENT_STATUS" description="Revoked"  sequenceNum="30"/>
+
+    <!-- ========== Province Status ========== -->
+    <rnfp.common.StatusItem statusId="PROV_ACTIVE"   statusTypeId="PROVINCE_STATUS" description="Active"   sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="PROV_INACTIVE" statusTypeId="PROVINCE_STATUS" description="Inactive" sequenceNum="20"/>
+
+    <!-- ========== Training Program Status ========== -->
+    <rnfp.common.StatusItem statusId="PROG_ACTIVE"   statusTypeId="PROGRAM_STATUS" description="Active"   sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="PROG_INACTIVE" statusTypeId="PROGRAM_STATUS" description="Inactive" sequenceNum="20"/>
+
+    <!-- ========== Training Sector Status ========== -->
+    <rnfp.common.StatusItem statusId="SECT_ACTIVE"   statusTypeId="SECTOR_STATUS" description="Active"   sequenceNum="10"/>
+    <rnfp.common.StatusItem statusId="SECT_INACTIVE" statusTypeId="SECTOR_STATUS" description="Inactive" sequenceNum="20"/>
+
+</entity-facade-xml>

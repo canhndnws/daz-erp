@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- ========== Learner (INFP) Services ========== -->
+
+    <service verb="register" noun="Learner" group="rnfp.learner">
+        <description>
+            Register a new learner and auto-generate their national INFP identifier.
+            Performs duplicate detection on firstName + lastName + birthDate.
+        </description>
+        <in-parameters>
+            <!-- Mandatory -->
+            <parameter name="firstName" required="true"/>
+            <parameter name="lastName" required="true"/>
+            <!-- Optional -->
+            <parameter name="middleName"/>
+            <parameter name="gender"/>
+            <parameter name="birthDate" type="Date"/>
+            <parameter name="provinceCode"/>
+            <parameter name="phoneNumber"/>
+            <parameter name="email"/>
+            <parameter name="statusId" default-value="LRN_ACTIVE"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="infpId"/>
+        </out-parameters>
+        <actions>
+            <!-- Duplicate check: same name + birth date -->
+            <entity-find entity-name="rnfp.learner.Learner" list="duplicates">
+                <econdition field-name="firstName"/>
+                <econdition field-name="lastName"/>
+                <econdition field-name="birthDate" ignore-if-empty="true"/>
+            </entity-find>
+            <if condition="duplicates">
+                <return error="true"
+                       message="Learner '${firstName} ${lastName}' with this birth date already exists: ${duplicates[0].infpId}"/>
+            </if>
+
+            <!-- Generate INFP-XXXXXX identifier -->
+            <set field="seqRaw" from="ec.entity.sequencedIdPrimary('rnfp.learner.Learner', null, null)"/>
+            <set field="infpId" from="'INFP-' + seqRaw.toString().padLeft(6, '0')"/>
+
+            <service-call name="create#rnfp.learner.Learner" in-map="context"/>
+
+            <service-call name="rnfp.common.audit.log#Action"
+                          in-map="[actionType:'CREATE', entityName:'rnfp.learner.Learner',
+                                   entityId:infpId, description:'Registered learner: ' + firstName + ' ' + lastName]"/>
+        </actions>
+    </service>
+
+    <service verb="update" noun="Learner" group="rnfp.learner">
+        <description>Update learner profile information</description>
+        <in-parameters>
+            <parameter name="infpId" required="true"/>
+            <parameter name="firstName"/>
+            <parameter name="middleName"/>
+            <parameter name="lastName"/>
+            <parameter name="gender"/>
+            <parameter name="birthDate" type="Date"/>
+            <parameter name="provinceCode"/>
+            <parameter name="phoneNumber"/>
+            <parameter name="email"/>
+            <parameter name="statusId"/>
+        </in-parameters>
+        <actions>
+            <entity-find-one entity-name="rnfp.learner.Learner" value-field="learner"/>
+            <if condition="!learner">
+                <return error="true" message="Learner '${infpId}' does not exist."/>
+            </if>
+            <service-call name="update#rnfp.learner.Learner" in-map="context"/>
+            <service-call name="rnfp.common.audit.log#Action"
+                          in-map="[actionType:'UPDATE', entityName:'rnfp.learner.Learner',
+                                   entityId:infpId, description:'Updated learner profile']"/>
+        </actions>
+    </service>
+
+    <service verb="search" noun="Learners" group="rnfp.learner">
+        <description>
+            Search learners by INFP ID, name, phone, or email.
+            Supports the SRS requirement for national learner lookup.
+        </description>
+        <in-parameters>
+            <parameter name="infpId"/>
+            <parameter name="firstName"/>
+            <parameter name="lastName"/>
+            <parameter name="phoneNumber"/>
+            <parameter name="email"/>
+            <parameter name="statusId"/>
+            <parameter name="pageIndex" type="Integer" default-value="0"/>
+            <parameter name="pageSize" type="Integer" default-value="20"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="learnerList" type="List"/>
+            <parameter name="learnerListCount" type="Integer"/>
+        </out-parameters>
+        <actions>
+            <entity-find entity-name="rnfp.learner.Learner" list="learnerList"
+                         count-field="learnerListCount" offset="pageIndex" limit="pageSize">
+                <econdition field-name="infpId" ignore-if-empty="true"/>
+                <econdition field-name="firstName" operator="like" value="%${firstName}%" ignore-if-empty="true"/>
+                <econdition field-name="lastName" operator="like" value="%${lastName}%" ignore-if-empty="true"/>
+                <econdition field-name="phoneNumber" ignore-if-empty="true"/>
+                <econdition field-name="email" ignore-if-empty="true"/>
+                <econdition field-name="statusId" ignore-if-empty="true"/>
+                <order-by field-name="lastName,firstName"/>
+            </entity-find>
+        </actions>
+    </service>
+
+</services>

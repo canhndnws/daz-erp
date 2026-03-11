@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <service-facade>
+        <service-file location="component://daz-erp/modules/rnfp-api/service/learner-api.xml"/>
+        <service-file location="component://daz-erp/modules/rnfp-api/service/program-api.xml"/>
+        <service-file location="component://daz-erp/modules/rnfp-api/service/credential-api.xml"/>
+    </service-facade>
+
+    <screen-facade>
+        <screen location="component://daz-erp/modules/rnfp-api/screen/ApiRest.xml"/>
+    </screen-facade>
+
+</moqui-conf>

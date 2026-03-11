@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-3.xsd">
+
+    <!-- ========== Enrollment Services ========== -->
+
+    <service verb="enroll" noun="Learner" group="rnfp.learner">
+        <description>
+            Enroll a learner in an authorized center-program.
+            Validates: learner exists, center-program is authorized, no duplicate active enrollment.
+        </description>
+        <in-parameters>
+            <parameter name="infpId" required="true"/>
+            <parameter name="centerProgramId" required="true"/>
+            <parameter name="enrollmentDate" type="Date" required="true"/>
+            <parameter name="statusId" default-value="ENR_IN_PROGRESS"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="enrollmentId"/>
+        </out-parameters>
+        <actions>
+            <!-- Validate learner -->
+            <entity-find-one entity-name="rnfp.learner.Learner" value-field="learner">
+                <field-map field-name="infpId"/>
+            </entity-find-one>
+            <if condition="!learner">
+                <return error="true" message="Learner '${infpId}' does not exist."/>
+            </if>
+            <if condition="learner.statusId != 'LRN_ACTIVE'">
+                <return error="true" message="Learner '${infpId}' is not active (status: ${learner.statusId})."/>
+            </if>
+
+            <!-- Validate center-program is authorized -->
+            <entity-find-one entity-name="rnfp.organization.CenterProgram" value-field="centerProgram">
+                <field-map field-name="centerProgramId"/>
+            </entity-find-one>
+            <if condition="!centerProgram">
+                <return error="true" message="Center-program '${centerProgramId}' does not exist."/>
+            </if>
+            <if condition="centerProgram.statusId != 'CP_AUTHORIZED'">
+                <return error="true" message="Center-program '${centerProgramId}' is not authorized (status: ${centerProgram.statusId})."/>
+            </if>
+
+            <!-- Check for duplicate active enrollment in same program -->
+            <entity-find entity-name="rnfp.learner.StudentEnrollment" list="activeEnrollments">
+                <econdition field-name="infpId"/>
+                <econdition field-name="centerProgramId"/>
+                <econdition field-name="statusId" value="ENR_IN_PROGRESS"/>
+            </entity-find>
+            <if condition="activeEnrollments">
+                <return error="true"
+                       message="Learner '${infpId}' already has an active enrollment in this center-program."/>
+            </if>
+
+            <set field="enrollmentId" from="ec.entity.sequencedIdPrimary('rnfp.learner.StudentEnrollment', null, null)"/>
+            <service-call name="create#rnfp.learner.StudentEnrollment" in-map="context"/>
+
+            <service-call name="rnfp.common.audit.log#Action"
+                          in-map="[actionType:'CREATE', entityName:'rnfp.learner.StudentEnrollment',
+                                   entityId:enrollmentId, description:'Enrolled learner ' + infpId + ' in center-program ' + centerProgramId]"/>
+        </actions>
+    </service>
+
+    <service verb="complete" noun="Enrollment" group="rnfp.learner">
+        <description>Mark an enrollment as completed or dropped</description>
+        <in-parameters>
+            <parameter name="enrollmentId" required="true"/>
+            <parameter name="statusId" required="true">
+                <description>ENR_COMPLETED or ENR_DROPPED</description>
+            </parameter>
+            <parameter name="completionDate" type="Date"/>
+        </in-parameters>
+        <actions>
+            <entity-find-one entity-name="rnfp.learner.StudentEnrollment" value-field="enrollment"/>
+            <if condition="!enrollment">
+                <return error="true" message="Enrollment '${enrollmentId}' does not exist."/>
+            </if>
+            <if condition="enrollment.statusId != 'ENR_IN_PROGRESS'">
+                <return error="true" message="Enrollment '${enrollmentId}' is not in progress (status: ${enrollment.statusId})."/>
+            </if>
+            <if condition="statusId != 'ENR_COMPLETED' &amp;&amp; statusId != 'ENR_DROPPED'">
+                <return error="true" message="Invalid completion status '${statusId}'. Use ENR_COMPLETED or ENR_DROPPED."/>
+            </if>
+
+            <set field="enrollment.statusId" from="statusId"/>
+            <set field="enrollment.completionDate" from="completionDate ?: new java.sql.Date(System.currentTimeMillis())"/>
+            <entity-update value-field="enrollment"/>
+
+            <service-call name="rnfp.common.audit.log#Action"
+                          in-map="[actionType:'UPDATE', entityName:'rnfp.learner.StudentEnrollment',
+                                   entityId:enrollmentId, description:'Enrollment status changed to: ' + statusId]"/>
+        </actions>
+    </service>
+
+    <service verb="find" noun="EnrollmentsByLearner" group="rnfp.learner">
+        <description>Find all enrollments for a given learner</description>
+        <in-parameters>
+            <parameter name="infpId" required="true"/>
+            <parameter name="statusId"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="enrollmentList" type="List"/>
+        </out-parameters>
+        <actions>
+            <entity-find entity-name="rnfp.learner.StudentEnrollment" list="enrollmentList">
+                <econdition field-name="infpId"/>
+                <econdition field-name="statusId" ignore-if-empty="true"/>
+                <order-by field-name="-enrollmentDate"/>
+            </entity-find>
+        </actions>
+    </service>
+
+</services>

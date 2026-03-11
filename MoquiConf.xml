@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
-    <screen-facade>
-        <!-- HR Module screens configured through the daz-erp shell -->
-        <screen location="component://webroot/screen/webroot.xml">
-            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
-        </screen>
-        <screen location="component://webroot/screen/webroot/apps.xml">
-            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
-        </screen>
-        <screen location="component://webroot/screen/webroot/qapps.xml">
-            <subscreens-item name="hr" location="component://daz-erp/components/daz-hr/screen/hr/HrApp.xml" menu-title="HR" menu-index="99"/>
-        </screen>
-    </screen-facade>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <!--
+        RNFP Platform - Root Moqui Configuration
+        Loads each module's MoquiConf.xml in dependency order:
+
+          rnfp-common        (no deps)
+          rnfp-government    (-> common)
+          rnfp-organization  (-> common)
+          rnfp-program       (-> common, organization)
+          rnfp-learner       (-> common, organization, program)
+          rnfp-training-exam (-> common, program, learner)
+          rnfp-credential    (-> common, learner, program, organization, training-exam)
+          rnfp-api           (-> all)
+    -->
+
+    <conf-list>
+        <conf location="component://daz-erp/modules/rnfp-common/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-government/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-organization/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-program/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-learner/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-training-exam/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-credential/MoquiConf.xml"/>
+        <conf location="component://daz-erp/modules/rnfp-api/MoquiConf.xml"/>
+    </conf-list>
+
 </moqui-conf>

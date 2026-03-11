@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <entity-facade>
+        <load-entity location="component://daz-erp/modules/rnfp-training-exam/entity/ExamCode.xml"/>
+        <load-entity location="component://daz-erp/modules/rnfp-training-exam/entity/ExamResult.xml"/>
+    </entity-facade>
+
+    <service-facade>
+        <service-file location="component://daz-erp/modules/rnfp-training-exam/service/exam-code-services.xml"/>
+        <service-file location="component://daz-erp/modules/rnfp-training-exam/service/exam-result-services.xml"/>
+    </service-facade>
+
+</moqui-conf>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-3.xsd"
+        standalone="true" require-authentication="anonymous-view">
+
+    <!--
+        RNFP REST API Root Screen
+        Base path: /api/rnfp
+
+        Routes:
+          Learners:
+            POST   /api/rnfp/learners                              → rnfp.api.learner.register#LearnerApi
+            GET    /api/rnfp/learners                              → rnfp.api.learner.search#LearnersApi
+            POST   /api/rnfp/learners/{infpId}/enrollments        → rnfp.api.learner.enroll#LearnerApi
+            GET    /api/rnfp/learners/{infpId}/credentials        → rnfp.api.credential.listByLearner#CredentialsApi
+
+          Programs:
+            GET    /api/rnfp/programs                              → rnfp.api.program.list#ProgramsApi
+            GET    /api/rnfp/sectors                               → rnfp.api.program.list#SectorsApi
+
+          Organizations:
+            GET    /api/rnfp/provinces                             → rnfp.api.program.list#ProvincesApi
+            GET    /api/rnfp/centers                               → rnfp.api.program.list#CentersApi
+
+          Credentials (public verification):
+            GET    /api/rnfp/credentials/{credentialId}/verify     → rnfp.api.credential.verify#CredentialApi
+            POST   /api/rnfp/credentials                           → rnfp.api.credential.issue#CredentialApi (restricted)
+    -->
+
+    <rest-api>
+        <!-- ===== Learners ===== -->
+        <resource name="learners">
+            <method type="post">
+                <service-call name="rnfp.api.learner.register#LearnerApi"/>
+            </method>
+            <method type="get">
+                <service-call name="rnfp.api.learner.search#LearnersApi"/>
+            </method>
+
+            <id name="infpId">
+                <resource name="enrollments">
+                    <method type="post">
+                        <service-call name="rnfp.api.learner.enroll#LearnerApi"/>
+                    </method>
+                </resource>
+                <resource name="credentials">
+                    <method type="get">
+                        <service-call name="rnfp.api.credential.listByLearner#CredentialsApi"/>
+                    </method>
+                </resource>
+            </id>
+        </resource>
+
+        <!-- ===== Programs ===== -->
+        <resource name="programs">
+            <method type="get">
+                <service-call name="rnfp.api.program.list#ProgramsApi"/>
+            </method>
+        </resource>
+
+        <!-- ===== Sectors ===== -->
+        <resource name="sectors">
+            <method type="get">
+                <service-call name="rnfp.api.program.list#SectorsApi"/>
+            </method>
+        </resource>
+
+        <!-- ===== Provinces ===== -->
+        <resource name="provinces">
+            <method type="get">
+                <service-call name="rnfp.api.program.list#ProvincesApi"/>
+            </method>
+        </resource>
+
+        <!-- ===== Centers ===== -->
+        <resource name="centers">
+            <method type="get">
+                <service-call name="rnfp.api.program.list#CentersApi"/>
+            </method>
+        </resource>
+
+        <!-- ===== Credentials ===== -->
+        <resource name="credentials">
+            <method type="post" require-authentication="true">
+                <service-call name="rnfp.api.credential.issue#CredentialApi"/>
+            </method>
+            <id name="credentialId">
+                <resource name="verify">
+                    <method type="get">
+                        <service-call name="rnfp.api.credential.verify#CredentialApi"/>
+                    </method>
+                </resource>
+            </id>
+        </resource>
+    </rest-api>
+
+</screen>

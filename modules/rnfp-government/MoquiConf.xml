@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<moqui-conf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/moqui-conf-3.xsd">
+
+    <entity-facade>
+        <load-entity location="component://daz-erp/modules/rnfp-government/entity/GovernmentDocument.xml"/>
+    </entity-facade>
+
+    <service-facade>
+        <service-file location="component://daz-erp/modules/rnfp-government/service/government-document-services.xml"/>
+    </service-facade>
+
+</moqui-conf>
